@@ -34,33 +34,36 @@ def confirm_token(token, expiration=3600):
 def home():
     return redirect("/login")
 
-@app.route('/login', methods = ['POST', 'GET'] )
+@app.route('/login', methods=['POST', 'GET'])
 def login():
     msg = ''
     if request.method == "POST" and 'email' in request.form and 'password' in request.form:
-        email= request.form['email']
+        email = request.form['email']
         password = request.form['password']
         try:
-            authentication = ttd.authenticate(username=email, password=password)
+            authentication = ttd.authenticate(email, password)
         except Exception as e:
+            print("Authentication failed:", e)  # Logging the exception can help in debugging
             authentication = False
 
         if authentication:
-            session["user"] = ttd.get_username(email)
+            session["user_id"] = ttd.get_user_id(email)  # Retrieve and store user ID in session
+            session["user"] = ttd.get_username_by_email(email)  # Assuming you have this function in ttd
             session["email"] = email
             return redirect("/home")
         else:
             msg = "Incorrect username or password"
 
-    return render_template("signup.html", msg = msg)
+    return render_template("signup.html", msg=msg)  
 
-@app.route('/home',methods= ['GET'])
+@app.route('/home', methods=['GET'])
 def go_home():
-    if session["user"] == None:
+    # Check if 'user' key exists in the session and it is not None
+    if 'user' not in session or session['user'] is None:
         return redirect("/login")
     else:
-        return render_template("landing-upon-login.html",user=session["user"])
-    
+        return render_template("landing-upon-login.html", user=session['user'])
+
 @app.route('/signup', methods = ['POST','GET'])
 def register():
     msg = ''
